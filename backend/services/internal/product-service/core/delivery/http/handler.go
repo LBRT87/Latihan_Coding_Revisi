@@ -51,8 +51,8 @@ func (ph *ProductHandler) GetDetail(c *gin.Context) {
 
 func (ph *ProductHandler) UpdatePrice(c *gin.Context) {
 	var req struct {
-		id       uint
-		newPrice float64 `json:"new_price"`
+		ID       uint
+		NewPrice float64 `json:"new_price"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -60,7 +60,7 @@ func (ph *ProductHandler) UpdatePrice(c *gin.Context) {
 		return
 	}
 
-	if err := ph.productUsecase.UpdatePrice(c.Request.Context(), req.id, req.newPrice); err != nil {
+	if err := ph.productUsecase.UpdatePrice(c.Request.Context(), req.ID, req.NewPrice); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}

@@ -41,7 +41,7 @@ func (m *Manager) generate(userid uint, role string, ttl time.Duration) (string,
 
 func (m *Manager) Verify(tokenString string) (*Claims, error) {
 	claims := Claims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (any, error) {
 		return m.secret, nil
 	})
 
