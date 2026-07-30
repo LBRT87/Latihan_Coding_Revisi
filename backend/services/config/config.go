@@ -20,7 +20,7 @@ func Load() *Config {
 	return &Config{
 		GRPCPORT:  GetEnv("GRPC_PORT", "9001"),
 		HTTPPORT:  GetEnv("HTTP_PORT", "8001"),
-		DBUSER:  GetEnv("DB_USER", ""),
+		DBUSER:    GetEnv("DB_USER", ""),
 		DBHOST:    GetEnv("DB_HOST", ""),
 		DBNAME:    GetEnv("DB_NAME", ""),
 		DBPORT:    GetEnv("DB_PORT", ""),
