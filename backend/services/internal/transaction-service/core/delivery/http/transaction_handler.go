@@ -1,3 +1,9 @@
 package http
 
-//test
+import (
+
+)
+
+type TransactionHandler struct {
+	transactionUsecase domain.transactionUsecase
+}

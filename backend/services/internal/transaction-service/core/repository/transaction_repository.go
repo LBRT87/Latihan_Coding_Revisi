@@ -21,18 +21,12 @@ func (t *TransactionRepositoryImpl) CreateTransaction(ctx context.Context, trans
 	return t.db.WithContext(ctx).Create(&transaction).Error
 }
 
-func (t *TransactionRepositoryImpl) GetCustomer(ctx context.Context, id uint) (string, error) {
-	var trans domain.Transaction
-	return t.db.WithContext(ctx).Where("id = ?", id).First(&trans).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &trans, err
+func (t *TransactionRepositoryImpl) GetAllTransaction (ctx context.Context) ([]domain.Transaction,error) {
+	var transactions []domain.Transaction
+	err := t.db.WithContext(ctx).Preload("Items").Find(&transactions).Error
+	return transaction,err
 }
 
-func (t *TransactionRepositoryImpl) funcGetStatusTransaction(ctx context.Context, id uint) (string, error) {
-}
-func (t *TransactionRepositoryImpl) GetTotalTransactin(ctx context.Context, id uint) (float64, error) {
+func (t *TransactionRepositoryImpl) UpdateStatus(ctx context.Context,id uint, status string) error {
+	return t.db.WithContext(ctx).Model(&domain.Transaction{}).Where("id = ?",id).Update("status",status).Error
 }

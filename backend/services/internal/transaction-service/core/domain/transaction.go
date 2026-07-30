@@ -4,17 +4,33 @@ import (
 	"context"
 )
 
+type TransactionItem struct {
+	ID uint `json:"id" gorm:"primaryKey"`
+	TransactionID uint `json:"id" gorm:"transaction_id"`
+	IceCreamID uint `json:""`
+	Name string `json:"name"`
+	Price float64 `json:"price"`
+	Quantity int `json:"quantity"`
+	PictureUrl string `json:"picture_url"`
+}
+
 type Transaction struct {
-	ID           uint
-	DateTime     string
-	CustomerName string
-	FinalAmount  float64
-	Status       string
+	ID           uint `json:"id" gorm:"primaryKey"`
+	DateTime     string `json:"date_time"`
+	CustomerName string `json:"customer_name"`
+	FinalAmount  float64 `json:"final_amount"`
+	Status       string `json:"status"`
+	Items []TransactionItem `json:"items" gorm:"foreignKey:TransactionID"`
 }
 
 type TransactionRepository interface {
 	CreateTransaction(ctx context.Context, transaction Transaction) error
-	GetCustomer(ctx context.Context,id uint) (string,error)
-	GetStatusTransaction(ctx context.Context,id uint) (string,error) 
-	GetTotalTransactin(ctx context.Context, id uint) (float64,error)
+	GetAllTransaction(ctx context.Context) ([]Transaction,error)
+	UpdateStatus(ctx context.Context, id uint,status string) error
+}
+
+type TransactionUseCase interface {
+	CreateTransaction(ctx context.Context, transaction Transaction) error
+	GetAllTransaction(ctx context.Context) ([]Transaction,error)
+	UpdateStatus(ctx context.Context, id uint,status string) error
 }
