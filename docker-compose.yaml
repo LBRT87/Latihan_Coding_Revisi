@@ -8,7 +8,7 @@ services:
       - "8080:8080"
     depends_on:
       pgpool:
-        condition: service_healthy
+        condition: service_started
       redis:
         condition: service_started
     env_file:
@@ -19,10 +19,10 @@ services:
   postgres-master:
     image: bitnami/postgresql:latest
     environment:
-      POSTGRESQL_USERNAME: postgres
-      POSTGRESQL_PASSWORD: postgres
-      POSTGRESQL_REPLICATION_USER: repl_user
-      POSTGRESQL_REPLICATION_PASSWORD: repl_password
+      POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
       POSTGRESQL_REPLICATION_MODE: master
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
@@ -39,10 +39,10 @@ services:
   postgres-slave:
     image: bitnami/postgresql:latest
     environment:
-      POSTGRESQL_USERNAME: postgres
-      POSTGRESQL_PASSWORD: postgres
-      POSTGRESQL_REPLICATION_USER: repl_user
-      POSTGRESQL_REPLICATION_PASSWORD: repl_password
+      POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME}
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_REPLICATION_USER: ${POSTGRESQL_REPLICATION_USER}
+      POSTGRESQL_REPLICATION_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
       POSTGRESQL_REPLICATION_MODE: slave
       POSTGRESQL_MASTER_HOST: postgres-master
       POSTGRESQL_MASTER_POST_NUMBER: 5432
@@ -58,23 +58,17 @@ services:
     image: mrgreen007/pgpool:latest
     environment:
       PGPOOL_BACKEND_NODES: 0:postgres-master:5432,1:postgres-slave:5432
-      PGPOOL_SR_CHECK_USER: repl_user
-      PGPOOL_SR_CHECK_PASSWORD: repl_password
-      PGPOOL_POSTGRES_USERNAME: postgres
-      PGPOOL_POSTGRES_PASSWORD: postgres
-      PGPOOL_ADMIN_USERNAME: admin_user
-      PGPOOL_ADMIN_PASSWORD: admin_password
+      PGPOOL_SR_CHECK_USER: ${POSTGRESQL_REPLICATION_USER}
+      PGPOOL_SR_CHECK_PASSWORD: ${POSTGRESQL_REPLICATION_PASSWORD}
+      PGPOOL_POSTGRES_USERNAME: ${POSTGRESQL_USERNAME}
+      PGPOOL_POSTGRES_PASSWORD: ${POSTGRESQL_PASSWORD}
+      PGPOOL_ADMIN_USERNAME: ${PGPOOL_ADMIN_USERNAME}
+      PGPOOL_ADMIN_PASSWORD: ${PGPOOL_ADMIN_PASSWORD}
     depends_on:
       postgres-master:
         condition: service_healthy
       postgres-slave:
         condition: service_started
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
-      interval: 1m30s
-      timeout: 30s
-      retries: 5
-      start_period: 30s
     ports:
       - "5432:5432"
     networks:
@@ -102,8 +96,48 @@ services:
     networks:
       - eskrim
 
-  # seeweed-master:
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:latest
+    ports:
+      - "9333:9333"
+    command: 'master -ip="seaweedfs-master" -ip.bind=0.0.0.0 -port=9333'
+    networks:
+      - eskrim
+    
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:latest
+    ports:
+      - "8081:8081"
+    command: 'volume -ip="seaweedfs-volume" -ip.bind=0.0.0.0 -port=8081 -master="seaweedfs-master:9333"'
+    depends_on:
+      - seaweedfs-master
+    networks:
+      - eskrim
+  
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:latest
+    ports:
+      - "8888:8888"
+    command: 'filer -ip="seaweedfs-filer" -ip.bind=0.0.0.0 -port=8888 -master="seaweedfs-master:9333"'
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+    networks:
+      - eskrim
 
+  seaweedfs-s3:
+    image: chrislusf/seaweedfs:latest
+    ports:
+      - "8333:8333"
+    command: 's3 -ip="seaweedfs-s3" -ip.bind=0.0.0.0 -port=8333 -filer="seaweedfs-filer:8888" -config=/etc/seaweedfs/s3.json'
+    volumes:
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+      - seaweedfs-filer
+    networks:
+      - eskrim
 
 networks:
   eskrim:

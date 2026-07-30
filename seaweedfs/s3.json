@@ -1,0 +1,14 @@
+{
+    "identities": [
+        {
+            "name": "eskrimuser",
+            "credentials": [
+                {
+                    "accessKey": "eskrimuser",
+                    "secretKey": "eskrimuser"
+                }
+            ],
+            "actions": [ "Admin" ]
+        }
+    ]
+}
