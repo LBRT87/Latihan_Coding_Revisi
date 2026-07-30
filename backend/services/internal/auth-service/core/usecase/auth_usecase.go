@@ -13,6 +13,7 @@ type AuthUsecaseInterface interface {
 	Login(c context.Context, req LoginRequest) (*LoginResponse, error)
 	UpdateEmail(c context.Context, req UpdateEmailRequest) error
 	UpdateUsername(c context.Context, req UpdateUsernameRequest) error
+	UpdatePassword(c context.Context, req UpdatePasswordRequest) error
 	RefreshToken(c context.Context, req RefreshTokenRequest) (*LoginResponse, error)
 	IssueToken(c context.Context, user domain.User) (*LoginResponse, error)
 }
@@ -104,7 +105,7 @@ func (a *AuthUsecase) Register(c context.Context, req RegisterRequest) error {
 
 // UpdateEmail implements AuthUsecaseInterface.
 func (a *AuthUsecase) UpdateEmail(c context.Context, req UpdateEmailRequest) error {
-	if exsiting, _ := a.userRepo.GetByID(c, req.ID); exsiting == nil {
+	if existing, _ := a.userRepo.GetByID(c, req.ID); existing == nil {
 		return fmt.Errorf("user doesnt exists")
 	}
 
@@ -113,7 +114,19 @@ func (a *AuthUsecase) UpdateEmail(c context.Context, req UpdateEmailRequest) err
 
 // UpdateUsername implements AuthUsecaseInterface.
 func (a *AuthUsecase) UpdateUsername(c context.Context, req UpdateUsernameRequest) error {
-	panic("unimplemented")
+	if existing, _ := a.userRepo.GetByID(c, req.ID); existing == nil {
+		return fmt.Errorf("user doesnt exists")
+	}
+	return a.userRepo.UpdateUsername(c, req.ID, req.NewUsername)
+}
+
+// UpdatePassword implements AuthUsecaseInterface.
+func (a *AuthUsecase) UpdatePassword(c context.Context, req UpdatePasswordRequest) error {
+	if existing, _ := a.userRepo.GetByID(c, req.ID); existing == nil {
+		return fmt.Errorf("user doesnt exists")
+	}
+
+	return a.userRepo.UpdatePassword(c, req.ID, req.NewPassword)
 }
 
 func NewAuthUsecase(

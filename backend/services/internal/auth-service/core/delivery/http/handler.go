@@ -101,3 +101,8 @@ func (h *AuthHandler) UpdateUsername(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
+
+// func (h *AuthHandler) UpdatePassword(c *gin.Context) {
+// 	var req usecase.UpdatePasswordRequest
+// 	if err := c.ShouldBindJSON(&req)
+// }

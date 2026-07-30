@@ -6,10 +6,14 @@ import (
 	"strings"
 
 	"github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/config"
-	"github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/auth-service/core/delivery/http"
-	"github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/auth-service/core/domain"
-	"github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/auth-service/core/repository"
-	"github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/auth-service/core/usecase"
+	authHandler "github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/auth-service/core/delivery/http"
+	authDomain "github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/auth-service/core/domain"
+	authRepository "github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/auth-service/core/repository"
+	authUsecase "github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/auth-service/core/usecase"
+	productHandler "github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/product-service/core/delivery/http"
+	productDomain "github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/product-service/core/domain"
+	productRepository "github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/product-service/core/repository"
+	productUseCase "github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/product-service/core/usecase"
 	"github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/pkg/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -42,18 +46,32 @@ func main() {
 			break
 		}
 	}
-	if err := db.AutoMigrate(&domain.User{}); err != nil {
+
+	r := gin.Default()
+
+	// User DB Migration
+	if err := db.AutoMigrate(&authDomain.User{}, &productDomain.IceCream{}); err != nil {
 		log.Fatalf("gagal migrasi database: %v", err)
 	}
+
 	cookieSecure := config.GetEnv("COOKIE_SECURE", "false") == "true"
 	redis := NewRedisClient()
 	jwtMgr := jwt.NewManager(config.GetEnv("JWT_SECRET", ""))
-	cacheRepo := repository.NewCacheRepository(redis)
-	userRepo := repository.NewUserRepository(db)
-	uc := usecase.NewAuthUsecase(userRepo, cacheRepo, *jwtMgr)
-	handler := http.NewAuthHandler(uc, cookieSecure)
-	router := http.NewRouter(*handler, &gin.Context{}, jwtMgr)
-	if err := router.Run(":" + cfg.HTTPPORT); err != nil {
+
+	// Auth Service
+	authCacheRepo := authRepository.NewCacheRepository(redis)
+	userRepo := authRepository.NewUserRepository(db)
+	authUC := authUsecase.NewAuthUsecase(userRepo, authCacheRepo, *jwtMgr)
+	authHand := authHandler.NewAuthHandler(authUC, cookieSecure)
+	authHandler.RegisterRouter(r, *authHand, &gin.Context{}, jwtMgr)
+
+	// Product Service
+	productRepo := productRepository.NewIceCreamRepository(db)
+	productUC := productUseCase.NewIceCreamUsecase(productRepo, cfg)
+	productHand := productHandler.NewProductHandler(productUC, cookieSecure)
+	productHandler.RegisterRouter(r, *productHand, &gin.Context{}, jwtMgr)
+
+	if err := r.Run(":" + cfg.HTTPPORT); err != nil {
 		log.Fatalf("failed to run")
 	}
 }

@@ -22,6 +22,11 @@ type UpdateUsernameRequest struct {
 	ID          uint   `json:"id"`
 	NewUsername string `json:"new_username"`
 }
+type UpdatePasswordRequest struct {
+	ID              uint   `json:"id"`
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+}
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }

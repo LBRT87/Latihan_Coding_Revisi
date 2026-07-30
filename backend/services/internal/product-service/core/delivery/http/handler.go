@@ -1,4 +1,4 @@
-package handler
+package http
 
 import (
 	"net/http"
@@ -45,7 +45,12 @@ func (ph *ProductHandler) GetDetail(c *gin.Context) {
 		return
 	}
 
-	// if err = ph.productUsecase.GetDetail(c.Request.Context(), req.id)
+	if iceCream, err := ph.productUsecase.GetDetail(c.Request.Context(), req.id); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	} else {
+		c.JSON(http.StatusOK, iceCream)
+	}
 
 }
 

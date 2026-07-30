@@ -17,12 +17,13 @@ const (
 )
 
 type UserRepository interface {
-	GetByID(c context.Context, id uint)  (*User, error)
+	GetByID(c context.Context, id uint) (*User, error)
 	GetByEmail(c context.Context, email string) (*User, error)
 	GetByUsername(c context.Context, username string) (*User, error)
 	Create(c context.Context, user User) error
-	UpdateEmail(c context.Context,  id uint, newEmail string)  error
+	UpdateEmail(c context.Context, id uint, newEmail string) error
 	UpdateUsername(c context.Context, id uint, newUsername string) error
+	UpdatePassword(c context.Context, id uint, newPassword string) error
 }
 
 type CacheRepository interface {

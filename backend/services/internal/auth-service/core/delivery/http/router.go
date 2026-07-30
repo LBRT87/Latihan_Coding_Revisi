@@ -11,8 +11,7 @@ type AuthRouter struct {
 	jwtMgr  jwt.Manager
 }
 
-func NewRouter(h AuthHandler, c *gin.Context, jwtMgr *jwt.Manager) *gin.Engine {
-	r := gin.Default()
+func RegisterRouter(r *gin.Engine, h AuthHandler, c *gin.Context, jwtMgr *jwt.Manager) {
 	auth := r.Group("/api/auth")
 	{
 		auth.POST("/login", h.Login)
@@ -21,9 +20,4 @@ func NewRouter(h AuthHandler, c *gin.Context, jwtMgr *jwt.Manager) *gin.Engine {
 		auth.PATCH("/update/username", h.UpdateUsername)
 		auth.POST("/refreshToken", h.RefreshToken)
 	}
-	product := r.Group("/api/ice-cream")
-	{
-		product.POST("/create")
-	}
-	return r
 }
