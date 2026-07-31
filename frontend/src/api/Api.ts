@@ -11,7 +11,7 @@ export const req = async <T> (path: string, body: object): Promise<T> => {
     return data as T;
 };
 
-export const res = async <T> (path: string, body: object): Promise<T> => {
+export const resGet = async <T> (path: string, body: object): Promise<T> => {
     const res = await fetch(`${BASE_URL}${path}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json '},
