@@ -87,8 +87,16 @@ func (p *PgIceCreamRepository) Update(c context.Context, id uint, updateData map
 	return p.db.WithContext(c).Model(&domain.IceCream{}).Where("id = ?", id).Updates(updateData).Error
 }
 
-func NewIceCreamRepository(db *gorm.DB) domain.IceCreamRepository {
+func NewIceCreamRepository(
+	client *minio.Client,
+	bucket string,
+	publicEndpoint string,
+	db *gorm.DB,
+) domain.IceCreamRepository {
 	return &PgIceCreamRepository{
 		db: db,
+		client: client,
+		bucket: bucket,
+		publicEndpoint: publicEndpoint,
 	}
 }
