@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"time"
 
 	"github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/config"
 	"github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/transaction-service/core/domain"
@@ -12,21 +13,24 @@ type TransactionUsecaseStruct struct {
 	Cfg             *config.Config
 }
 
-func NewTransactionUsecase(transRepo domain.TransactionRepository, cfg *config.Config) domain.TransactionUseCase {
-	return &TransactionUsecaseStruct{TransactionRepo: transRepo, Cfg: cfg}
+func NewTransactionUsecase(transRepo domain.TransactionRepository, cfg *config.Config) *TransactionUsecaseStruct {
+	return &TransactionUsecaseStruct{
+		TransactionRepo: transRepo,
+		Cfg:             cfg,
+	}
 }
-func (u *TransactionUsecaseStruct) CreateTransaction (ctx context.Context, trx domain.Transaction) error {
+func (u *TransactionUsecaseStruct) CreateTransaction(ctx context.Context, trx domain.Transaction) error {
 	if trx.DateTime == "" {
-		trx.DateTime = Time.Now().Format("2006-01-02 15:04:05")
+		trx.DateTime = time.Now().Format("2006-01-02 15:04:05")
 	}
 
-	return u.TransactionRepo.CreateTransaction(ctx,trx)
+	return u.TransactionRepo.CreateTransaction(ctx, trx)
 }
 
-func (u *TransactionUsecaseStruct)GetAllTransaction (ctx context.Context) ([]domain.Transaction,error) {
+func (u *TransactionUsecaseStruct) GetAllTransaction(ctx context.Context) ([]domain.Transaction, error) {
 	return u.TransactionRepo.GetAllTransaction(ctx)
 }
 
-func (u *TransactionUsecaseStruct) UpdateStatus (ctx context.Context,id uint,status string) {
-	return u.TransactionRepo.UpdateStatus(ctx,id,status)
+func (u *TransactionUsecaseStruct) UpdateStatus(ctx context.Context, id uint, status string) error {
+	return u.TransactionRepo.UpdateStatus(ctx, id, status)
 }

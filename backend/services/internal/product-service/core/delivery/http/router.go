@@ -14,6 +14,6 @@ type ProductRouter struct {
 func RegisterRouter(r *gin.Engine, h ProductHandler, c *gin.Context, jwtMgr *jwt.Manager) {
 	prod := r.Group("/api/product")
 	{
-		prod.POST()
+		prod.POST("/create", JWTAuth(c, jwtMgr), h.Create)
 	}
 }

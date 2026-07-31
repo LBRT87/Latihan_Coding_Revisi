@@ -20,9 +20,11 @@ func NewCacheRepository(redisClient redis.UniversalClient) domain.CacheRepositor
 func (r *RedisCacheRepository) Get(c context.Context, key string) (interface{}, error) {
 	panic("unimplemented")
 }
+
 func (r *RedisCacheRepository) Set(c context.Context, key string, value interface{}) error {
 	panic("unimplemented")
 }
+
 func (r *RedisCacheRepository) Delete(c context.Context, key string) error {
 	panic("unimplemented")
 }
