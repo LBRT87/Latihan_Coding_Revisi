@@ -58,6 +58,9 @@ func main() {
 	redis := NewRedisClient()
 	jwtMgr := jwt.NewManager(config.GetEnv("JWT_SECRET", ""))
 
+	client := cfg.NewSeaweedClient()
+	cfg.InitSeaweed(client)
+
 	// Auth Service
 	authCacheRepo := authRepository.NewCacheRepository(redis)
 	userRepo := authRepository.NewUserRepository(db)
@@ -66,7 +69,7 @@ func main() {
 	authHandler.RegisterRouter(r, *authHand, &gin.Context{}, jwtMgr)
 
 	// Product Service
-	productRepo := productRepository.NewIceCreamRepository(db)
+	productRepo := productRepository.NewIceCreamRepository(client, cfg.BUCKETNAME, cfg.PUBLICSEAWEEDENDPOINT, db)
 	productUC := productUseCase.NewIceCreamUsecase(productRepo, cfg)
 	productHand := productHandler.NewProductHandler(productUC, cookieSecure)
 	productHandler.RegisterRouter(r, *productHand, &gin.Context{}, jwtMgr)

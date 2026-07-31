@@ -5,15 +5,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ProductRouter struct {
-	Handler ProductHandler
-	c       *gin.Context
-	jwtMgr  jwt.Manager
-}
-
 func RegisterRouter(r *gin.Engine, h ProductHandler, c *gin.Context, jwtMgr *jwt.Manager) {
-	prod := r.Group("/api/product")
+	prod := r.Group("/api/icecream")
 	{
-		prod.POST("/create", JWTAuth(c, jwtMgr), h.Create)
+		prod.GET("", h.GetList)
+		prod.POST("/create", h.Create)
+		prod.DELETE("/detail/:id", h.Delete)
+		prod.DELETE("/delete/:id", h.Delete)
+		prod.PATCH("/price", h.Update)
 	}
 }
