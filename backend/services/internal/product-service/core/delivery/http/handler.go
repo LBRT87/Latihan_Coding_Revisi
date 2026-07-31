@@ -1,33 +1,58 @@
 package http
 
 import (
+	"io"
 	"net/http"
+	"strconv"
 
-	"github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/product-service/core/domain"
+	"github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/product-service/core/usecase"
 	"github.com/gin-gonic/gin"
 )
 
 type ProductHandler struct {
-	productUsecase domain.IceCreamUseCase
+	productUsecase usecase.IceCreamUsecaseInterface
 	cookieSecure   bool
 }
 
-func NewProductHandler(usecase domain.IceCreamUseCase, cookieSecure bool) *ProductHandler {
+func NewProductHandler(productUsecase usecase.IceCreamUsecaseInterface, cookieSecure bool) *ProductHandler {
 	return &ProductHandler{
-		productUsecase: usecase,
+		productUsecase: productUsecase,
 		cookieSecure:   cookieSecure,
 	}
 }
 
-func (ph *ProductHandler) CreateIceCream(c *gin.Context) {
-	var req domain.IceCream
+func (ph *ProductHandler) Create(c *gin.Context) {
+	var req usecase.CreateIceCreamRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}
 
-	if err := ph.productUsecase.CreateIceCream(c.Request.Context(), req); err != nil {
+	fileHeader, err := c.FormFile("Photo")
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error":"photo must be upload",
+		})
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error":"error while opening the file",
+		})
+	}
+
+	defer file.Close()
+
+	photoByte, err := io.ReadAll(file)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error":"error while reading the file",
+		})
+	}
+
+	if err := ph.productUsecase.Create(c.Request.Context(), req, photoByte); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
@@ -36,36 +61,53 @@ func (ph *ProductHandler) CreateIceCream(c *gin.Context) {
 }
 
 func (ph *ProductHandler) GetDetail(c *gin.Context) {
-	var req struct {
-		id uint
-	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+	id, err := strconv.ParseInt(c.Param("id"), 10, 0)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
 
-	if iceCream, err := ph.productUsecase.GetDetail(c.Request.Context(), req.id); err != nil {
+	if iceCream, err := ph.productUsecase.GetByID(c.Request.Context(), uint(id)); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	} else {
 		c.JSON(http.StatusOK, iceCream)
 	}
-
 }
 
-func (ph *ProductHandler) UpdatePrice(c *gin.Context) {
-	var req struct {
-		ID       uint
-		NewPrice float64 `json:"new_price"`
-	}
+func (ph *ProductHandler) GetList(c *gin.Context) {
+	var req usecase.ListIceCreamRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}
 
-	if err := ph.productUsecase.UpdatePrice(c.Request.Context(), req.ID, req.NewPrice); err != nil {
+	data, err := ph.productUsecase.GetAll(c.Request.Context(), req)
+	
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"iceCreams":data.IceCreams,
+		"totalData":data.TotalData,
+	})
+
+}
+
+func (ph *ProductHandler) Update(c *gin.Context) {
+	var req usecase.UpdateIceCreamRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		return
+	}
+
+	if err := ph.productUsecase.Update(c.Request.Context(), req); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}
@@ -75,17 +117,14 @@ func (ph *ProductHandler) UpdatePrice(c *gin.Context) {
 	})
 }
 
-func (ph *ProductHandler) DeleteIceCream(c *gin.Context) {
-	var req struct {
-		id uint
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+func (ph *ProductHandler) Delete(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 0)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
 
-	if err := ph.productUsecase.DeleteIceCream(c.Request.Context(), req.id); err != nil {
+	if err := ph.productUsecase.Delete(c.Request.Context(), uint(id)); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}
@@ -93,7 +132,3 @@ func (ph *ProductHandler) DeleteIceCream(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
 
 }
-
-// GetDetail(c context.Context, id uint) (IceCream, error)
-// UpdatePrice(c context.Context, id uint, newPrice float64) error
-// DeleteIceCream(c context.Context, id uint) error

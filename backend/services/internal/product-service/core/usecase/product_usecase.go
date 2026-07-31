@@ -7,41 +7,91 @@ import (
 	"github.com/Acad600-TPA/WEB-EJ-NH-JR-KO-WA-261/backend/services/internal/product-service/core/domain"
 )
 
-type IceCreamUsecaseStruct struct {
+type IceCreamUsecaseInterface interface {
+	Create(ctx context.Context, req CreateIceCreamRequest, photo []byte) error
+	Update(ctx context.Context, req UpdateIceCreamRequest) error
+	Delete(ctx context.Context, id uint) error
+	GetByID(ctx context.Context, id uint) (*domain.IceCream, error)
+	GetAll(ctx context.Context, req ListIceCreamRequest) (*ListIceCreamResponse, error)
+}
+
+type IceCreamUsecase struct {
 	IceCreamRepo domain.IceCreamRepository
 	Cfg          *config.Config
 }
 
-func NewIceCreamUsecase(iceCreamRepo domain.IceCreamRepository, cfg *config.Config) domain.IceCreamUseCase {
-	return &IceCreamUsecaseStruct{IceCreamRepo: iceCreamRepo, Cfg: cfg}
-}
+// Create implements [IceCreamUsecaseInterface].
+func (i *IceCreamUsecase) Create(ctx context.Context, req CreateIceCreamRequest, photo []byte) error {
+	newIceCream := domain.IceCream{
+		Name: req.Name,
+		Flavour: req.Flavour,
+		Description: req.Description,
+		Price: req.Price,
+		Stock: req.Stock,
+	}
 
-func (u *IceCreamUsecaseStruct) CreateIceCream(c context.Context, icecream domain.IceCream) error {
-	if err := u.IceCreamRepo.CreateIceCream(c, icecream); err != nil {
+	if err := i.IceCreamRepo.Create(ctx, newIceCream, photo); err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func (u *IceCreamUsecaseStruct) GetDetail(c context.Context, id uint) (*domain.IceCream, error) {
-	exist, err := u.IceCreamRepo.GetDetail(c, id)
-	if err != nil || exist == nil {
+// Delete implements [IceCreamUsecaseInterface].
+func (i *IceCreamUsecase) Delete(ctx context.Context, id uint) error {
+	return i.IceCreamRepo.Delete(ctx, id)
+}
+
+// GetAll implements [IceCreamUsecaseInterface].
+func (i *IceCreamUsecase) GetAll(ctx context.Context, req ListIceCreamRequest) (*ListIceCreamResponse, error) {
+
+	filter := domain.IceCreamFilter{
+		Name: req.Name,
+		Page: req.Page,
+		Limit: req.Limit,
+		Random: req.Random,
+	}
+
+	iceCream, total, err := i.IceCreamRepo.GetAll(ctx, filter)
+
+	if err != nil {
 		return nil, err
 	}
-	return exist, nil
+
+	return &ListIceCreamResponse{
+		IceCreams: iceCream,
+		TotalData: int(total),
+	}, nil
 }
 
-func (u *IceCreamUsecaseStruct) UpdatePrice(c context.Context, id uint, newPrice float64) error {
-	err := u.IceCreamRepo.UpdatePrice(c, id, newPrice)
-	if err != nil {
-		return err
-	}
-	return nil
+// GetByID implements [IceCreamUsecaseInterface].
+func (i *IceCreamUsecase) GetByID(ctx context.Context, id uint) (*domain.IceCream, error) {
+	return i.IceCreamRepo.GetDetail(ctx, id)
 }
-func (u *IceCreamUsecaseStruct) DeleteIceCream(c context.Context, id uint) error {
-	err := u.IceCreamRepo.DeleteIceCream(c, id)
-	if err != nil {
-		return err
+
+// Update implements [IceCreamUsecaseInterface].
+func (i *IceCreamUsecase) Update(ctx context.Context, req UpdateIceCreamRequest) error {
+	updateData := make(map[string]interface{})
+
+	if req.Description != "" {
+		updateData["description"] = req.Description
 	}
-	return nil
+
+	if req.Flavour != "" {
+		updateData["flavour"] = req.Flavour
+	}
+
+	if req.Price > 0 {
+		updateData["price"] = req.Price
+	}
+
+	if req.Stock >= 0 {
+		updateData["stock"] = req.Stock
+	}
+
+	return i.IceCreamRepo.Update(ctx, req.ID, updateData)
+}
+
+func NewIceCreamUsecase(iceCreamRepo domain.IceCreamRepository, cfg *config.Config) IceCreamUsecaseInterface {
+	return &IceCreamUsecase{IceCreamRepo: iceCreamRepo, Cfg: cfg}
 }
